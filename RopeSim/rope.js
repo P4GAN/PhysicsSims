@@ -5,8 +5,8 @@ const simulationHeight = 10;
 const simulationWidth = 15;
 
 const g = 9.8;
-const substeps = 8;
-const friction = 0.3;
+const substeps = 16;
+const friction = 0.5;
 const particleList = [];
 const springList = [];
 
@@ -34,7 +34,12 @@ class Particle {
         this.x = x;
         this.y = y;
         this.r = r;
+        this.vx = 0;
+        this.vy = 0;
+        this.ax = 0;
+        this.ay = 0;
         particleList.push(this)
+        console.log(this)
     }
     physicsStep(dt) {}
     applyForce(fx, fy) {}
@@ -75,19 +80,29 @@ class DynamicParticle extends Particle {
 }
 
 class Spring {
-    constructor(k, springLength, a, b) {
+    constructor(k, springLength, a, b, damping) {
         this.k = k;
         this.springLength = springLength;
         this.a = a;
         this.b = b;
+        this.damping = damping;
         springList.push(this);
     }
-    springStep() {
+    applyForces() {
+        let f = 0;
+        let length = Math.sqrt((this.a.x - this.b.x) ** 2 + (this.a.y - this.b.y) ** 2);
+        let dvx = this.a.vx - this.b.vx;
+        let dvy = this.a.vy - this.b.vy;
+        f += -this.k * (length - this.springLength)
+        f += this.damping * ((this.a.x - this.b.x) * dvx + (this.a.x - this.b.x) * dvy) / length
+        
         let fx = 0;
         let fy = 0;
-        let length = Math.sqrt((this.a.x - this.b.x) ** 2 + (this.a.y - this.b.y) ** 2);
-        fx += -this.k * (length - this.springLength) * (this.a.x - this.b.x) / length;
-        fy += -this.k * (length - this.springLength) * (this.a.y - this.b.y) / length;
+        if (length > 1e-3) {
+            fx = f * (this.a.x - this.b.x) / length;
+            fy = f * (this.a.y - this.b.y) / length;
+        }
+
         this.a.applyForce(fx, fy);
         this.b.applyForce(-fx, -fy);
     }
@@ -103,14 +118,15 @@ class Spring {
 }
 
 let static = new Particle(7.5, 9, 1);
-for (let i = 1; i < 50; i++) {
-    p = new DynamicParticle(7.5 - i * 0.05, 9 - i * 0.05, 1, 1);
-    s = new Spring(5000, 0.01, p, particleList[i - 1]);
+for (let i = 1; i < 30; i++) {
+    console.log(i)
+    p = new DynamicParticle(7.5 - i * 0.1, 9 - i * 0.1, 1, 1);
+    s = new Spring(2000, 0.1, p, particleList[i - 1], 0.5);
 }
-particleList[particleList.length - 1].r = 5
-particleList[particleList.length - 1].m = 10
 
-end = particleList[particleList.length - 1];
+let end = particleList[particleList.length - 1];
+end.m = 10;
+end.r = 10;
 
 function moveEnd(e) {
     mouseX = e.x;
@@ -150,7 +166,7 @@ function step(time) {
 
     for (let n = 0; n < substeps; n++) {
         for (let i = 0; i < springList.length; i++) {
-            springList[i].springStep();
+            springList[i].applyForces();
         }
         for (let i = 0; i < particleList.length; i++) {
             applyGravity(particleList[i]);
