@@ -103,11 +103,12 @@ class Spring {
 }
 
 let static = new Particle(7.5, 9, 1);
-for (let i = 1; i < 30; i++) {
+for (let i = 1; i < 50; i++) {
     p = new DynamicParticle(7.5 - i * 0.05, 9 - i * 0.05, 1, 1);
-    s = new Spring(1500, 0.01, p, particleList[i - 1]);
+    s = new Spring(5000, 0.01, p, particleList[i - 1]);
 }
 particleList[particleList.length - 1].r = 5
+particleList[particleList.length - 1].m = 10
 
 end = particleList[particleList.length - 1];
 
