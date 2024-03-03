@@ -5,10 +5,9 @@ const simulationHeight = 10;
 const simulationWidth = 15;
 
 const g = 9.8;
-const substeps = 32;
-const friction = 0.3;
+const substeps = 16;
+const friction = 0.5;
 const particleList = [];
-const springList = [];
 
 let mouseX = 0;
 let mouseY = 0;
@@ -30,7 +29,7 @@ function getSimulationCoords(canvasX, canvasY) {
 }
 
 class Particle {
-    constructor(x, y, r) {
+    constructor(x, y, r, color) {
         this.x = x;
         this.y = y;
         this.r = r;
@@ -38,6 +37,7 @@ class Particle {
         this.vy = 0;
         this.ax = 0;
         this.ay = 0;
+        this.color = color;
         particleList.push(this)
         console.log(this)
     }
@@ -46,13 +46,14 @@ class Particle {
     draw() {
         let [drawX, drawY] = getCanvasCoords(this.x, this.y)
         ctx.beginPath();
+        ctx.fillStyle = this.color;
         ctx.arc(drawX, drawY, this.r, 0, 2 * Math.PI);
         ctx.fill();
     }
 }
 
 class DynamicParticle extends Particle {
-    constructor(x, y, r, m) {
+    constructor(x, y, r, m, color) {
         super(x, y, r)
         this.m = m;
         this.prevX = x;
@@ -61,6 +62,7 @@ class DynamicParticle extends Particle {
         this.vy = 0;
         this.ax = 0;
         this.ay = 0;
+        this.color = color;
     }
     physicsStep(dt) {
         let [tempX, tempY] = [this.x, this.y];
@@ -79,58 +81,12 @@ class DynamicParticle extends Particle {
     }
 }
 
-class Spring {
-    constructor(k, springLength, a, b, damping) {
-        this.k = k;
-        this.springLength = springLength;
-        this.a = a;
-        this.b = b;
-        this.damping = damping;
-        springList.push(this);
-    }
-    applyForces() {
-        let f = 0;
-        let length = Math.sqrt((this.a.x - this.b.x) ** 2 + (this.a.y - this.b.y) ** 2);
-        let dvx = this.a.vx - this.b.vx;
-        let dvy = this.a.vy - this.b.vy;
-        f += -this.k * (length - this.springLength)
-        f += this.damping * ((this.a.x - this.b.x) * dvx + (this.a.x - this.b.x) * dvy) / length
-        
-        let fx = 0;
-        let fy = 0;
-        if (length > 1e-3) {
-            fx = f * (this.a.x - this.b.x) / length;
-            fy = f * (this.a.y - this.b.y) / length;
-        }
-
-        this.a.applyForce(fx, fy);
-        this.b.applyForce(-fx, -fy);
-    }
-    draw() {
-        let [drawXa, drawYa] = getCanvasCoords(this.a.x, this.a.y)
-        let [drawXb, drawYb] = getCanvasCoords(this.b.x, this.b.y)
-
-        ctx.beginPath();
-        ctx.moveTo(drawXa, drawYa);
-        ctx.lineTo(drawXb, drawYb); 
-        ctx.stroke();
-    }
-}
 
 let static = new Particle(7.5, 9, 1);
-for (let i = 1; i < 50; i++) {
+for (let i = 1; i < 30; i++) {
     console.log(i)
     p = new DynamicParticle(7.5 - i * 0.1, 9 - i * 0.1, 1, 1);
-    s = new Spring(5000, 0.05, p, particleList[i - 1], 0.7);
-}
-
-let end = particleList[particleList.length - 1];
-end.m = 10;
-end.r = 10;
-
-function moveEnd(e) {
-    mouseX = e.x;
-    mouseY = e.y
+    s = new Spring(2000, 0.1, p, particleList[i - 1], 0.5);
 }
 
 function applyGravity(particle) {
